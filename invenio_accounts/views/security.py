@@ -2,6 +2,7 @@
 #
 # This file is part of Invenio.
 # Copyright (C) 2017-2018 CERN.
+# Copyright (C)      2022 Graz University of Technology.
 #
 # Invenio is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
@@ -77,3 +78,7 @@ def revoke_session():
     else:
         flash("Unable to remove the session {0}.".format(sid_s), "error")
     return redirect(url_for("invenio_accounts.security"))
+
+
+blueprint.route("/security/", methods=["GET"])(security)
+blueprint.route("/sessions/revoke/", methods=["POST"])(revoke_session)

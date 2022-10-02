@@ -3,6 +3,7 @@
 # This file is part of Invenio.
 # Copyright (C) 2015-2018 CERN.
 # Copyright (C)      2021 TU Wien.
+# Copyright (C)      2022 Graz University of Technology.
 #
 # Invenio is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
@@ -238,11 +239,6 @@ class InvenioAccounts(object):
         user_logged_in.connect(csrf_token_reset, app)
         user_logged_out.connect(logout_listener, app)
         user_logged_out.connect(csrf_token_reset, app)
-        from .views.security import revoke_session, security
-        from .views.settings import blueprint
-
-        blueprint.route("/security/", methods=["GET"])(security)
-        blueprint.route("/sessions/revoke/", methods=["POST"])(revoke_session)
 
 
 class InvenioAccountsREST(InvenioAccounts):
