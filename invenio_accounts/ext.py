@@ -18,6 +18,9 @@ from flask_login import LoginManager, user_logged_in, user_logged_out
 from flask_principal import AnonymousIdentity
 from flask_security import Security
 from invenio_db import db
+from invenio_i18n import lazy_gettext as _
+from invenio_theme import menu
+from invenio_theme.proxies import current_theme_icons
 from passlib.registry import register_crypt_handler
 from werkzeug.utils import cached_property
 
@@ -245,6 +248,26 @@ class InvenioAccounts(object):
         blueprint.route("/security/", methods=["GET"])(security)
         blueprint.route("/sessions/revoke/", methods=["POST"])(revoke_session)
 
+    def init_menu(self, app):
+        """Init Menu."""
+
+        # - Change password
+        if app.config.get("SECURITY_CHANGEABLE", True):
+            blueprint_name = app.config["SECURITY_BLUEPRINT_NAME"]
+            view_name = f"{blueprint_name}.change_password"
+
+            menu.submenu("settings.change_password").register(
+                view_name,
+                # NOTE: Menu item text (icon replaced by a key icon).
+                _(
+                    "%(icon)s Change password",
+                    icon=(
+                        '<i class="{icon}"></i>'.format(icon=current_theme_icons.key)
+                    ),
+                ),
+                order=1,
+            )
+
 
 class InvenioAccountsREST(InvenioAccounts):
     """Invenio-Accounts REST extension."""
@@ -322,3 +345,40 @@ class InvenioAccountsUI(InvenioAccounts):
         @app.before_request
         def make_session_permanent():
             session.permanent = True
+
+
+def finalize_app(app):
+    """Finalize app."""
+    post_ext_init(app)
+    check_security_settings(app)
+
+
+def post_ext_init(app):
+    """."""
+    app.config.setdefault(
+        "ACCOUNTS_SITENAME", app.config.get("THEME_SITENAME", "Invenio")
+    )
+    app.config.setdefault(
+        "ACCOUNTS_BASE_TEMPLATE",
+        app.config.get("BASE_TEMPLATE", "invenio_accounts/base.html"),
+    )
+    app.config.setdefault(
+        "ACCOUNTS_COVER_TEMPLATE",
+        app.config.get("COVER_TEMPLATE", "invenio_accounts/base_cover.html"),
+    )
+    app.config.setdefault(
+        "ACCOUNTS_SETTINGS_TEMPLATE",
+        app.config.get("SETTINGS_TEMPLATE", "invenio_accounts/settings/base.html"),
+    )
+
+
+def check_security_settings(app):
+    """Warn if session cookie is not secure in production."""
+    in_production = not (app.debug or app.testing)
+    secure = app.config.get("SESSION_COOKIE_SECURE")
+
+    if in_production and not secure:
+        app.logger.warning(
+            "SESSION_COOKIE_SECURE setting must be set to True to prevent the "
+            "session cookie from being leaked over an insecure channel."
+        )
