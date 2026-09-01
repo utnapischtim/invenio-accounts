@@ -145,7 +145,6 @@ def create_legacy_user(email="test@test.org", password="qwert1234", **kwargs):
     ctx = flask.current_app.extensions["security"].pwd_context
     encrypted_password = ctx.hash(
         password,
-        scheme="invenio_aes_encrypted_email",
         salt=email,
     )
 
